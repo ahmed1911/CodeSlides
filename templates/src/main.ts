@@ -107,6 +107,17 @@ function init() {
     };
   }
 
+  const fullscreenBtn = document.getElementById('toggleFullscreen');
+  if (fullscreenBtn) {
+    fullscreenBtn.onclick = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    };
+  }
+
   if (navigationList.length > 0) {
     currentIndex = 0;
     showFile(currentIndex);
