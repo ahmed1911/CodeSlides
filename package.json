@@ -1,0 +1,49 @@
+{
+  "name": "codeslides",
+  "version": "1.0.0",
+  "description": "Generate HTML slides from code",
+  "main": "dist/cli.js",
+  "bin": "./dist/cli.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "build": "tsc && npm run build:frontend && npm run build:css",
+    "build:frontend": "node build.js",
+    "build:css": "tailwindcss -i ./templates/src/input.css -o ./templates/dist/output.css --minify",
+    "start": "ts-node src/cli.ts",
+    "dev": "ts-node src/cli.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "slides",
+    "generator",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/marked": "^6.0.0",
+    "@types/node": "^22.0.0",
+    "cac": "^6.7.14",
+    "chokidar": "^5.0.0",
+    "fast-glob": "^3.3.3",
+    "rollup": "^4.55.1",
+    "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "animejs": "3.2.1",
+    "canvas-confetti": "^1.9.4",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.1"
+  }
+}
