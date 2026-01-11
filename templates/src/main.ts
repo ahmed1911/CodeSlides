@@ -48,6 +48,36 @@ const contentArea = document.getElementById('contentArea') as HTMLElement;
 let navigationList: { path: string; data: FileSystemItem; element: HTMLElement }[] = [];
 let currentIndex = -1;
 
+// URL Hash Management
+function updateURLHash(index: number) {
+  const slide = navigationList[index];
+  if (!slide) return;
+  
+  const hash = `#slide-${index}`;
+  history.replaceState({ slideIndex: index }, '', hash);
+}
+
+function parseURLHash(): number | null {
+  const hash = window.location.hash.slice(1); // Remove #
+  
+  // Support #slide-5 format
+  if (hash.startsWith('slide-')) {
+    const index = parseInt(hash.replace('slide-', ''), 10);
+    if (!isNaN(index) && index >= 0 && index < navigationList.length) {
+      return index;
+    }
+  }
+  
+  // Support #path/to/file.ts format
+  const slideIndex = navigationList.findIndex(
+    item => item.path === hash
+  );
+  if (slideIndex !== -1) return slideIndex;
+  
+  return null;
+}
+
+
 // Initialize
 function init() {
   const projectStructure = window.projectStructure;
@@ -118,8 +148,15 @@ function init() {
     };
   }
 
-  if (navigationList.length > 0) {
+  // Check for URL hash on load
+  const hashIndex = parseURLHash();
+  if (hashIndex !== null) {
+    currentIndex = hashIndex;
+  } else if (navigationList.length > 0) {
     currentIndex = 0;
+  }
+
+  if (navigationList.length > 0) {
     showFile(currentIndex);
   }
 }
@@ -220,6 +257,9 @@ function showFile(index: number) {
   const item = navigationList[index];
   if (!item) return;
 
+  // Update URL hash
+  updateURLHash(index);
+
   // Active State
   document.querySelectorAll('.tree-item').forEach((el) => el.classList.remove('active'));
   item.element.classList.add('active');
@@ -233,7 +273,7 @@ function showFile(index: number) {
     fill: 'forwards',
   });
 
-  // Confetti
+  // Confetti on final slide
   if (item.path.includes('Abschluss')) {
     confetti({
       particleCount: 150,
