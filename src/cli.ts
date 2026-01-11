@@ -3,6 +3,8 @@ import { cac } from 'cac';
 import * as path from 'path';
 import * as fs from 'fs';
 import { promises as fsp } from 'fs';
+import chalk from 'chalk';
+import ora from 'ora';
 import { scanDirectory, buildFilePathMap } from './scanner';
 import {
   loadContent,
@@ -24,25 +26,15 @@ const CONFIG = {
   DEFAULT_TITLE: 'Project Explorer',
 } as const;
 
-// --- Logger Helper ---
-const Log = {
-  header: (version: string) =>
-    console.log(`\n🚀 CodeSlides Generator v${version} (TS)\n====================================`),
-  info: (msg: string) => console.log(`ℹ️  ${msg}`),
-  success: (msg: string) => console.log(`✅ ${msg}`),
-  step: (msg: string) => console.log(`\n👉 ${msg}`),
-  error: (msg: string) => console.error(`❌ ${msg}`),
-  file: (path: string, label = 'File') => console.log(`💾 ${label}: ${path}`),
-};
-
 // --- Main Build Logic ---
 async function runBuild(root: string | undefined, out: string | undefined) {
   // 1. Path Setup
   const projectPath = path.resolve(root || '.');
   const outputDir = out ? path.resolve(out) : path.join(projectPath, 'presentation');
 
-  console.log(`📁 Project: ${projectPath}`);
-  console.log(`📂 Output:  ${outputDir}`);
+  console.log(chalk.dim('📁 Project:'), chalk.cyan(projectPath));
+  console.log(chalk.dim('📂 Output: '), chalk.cyan(outputDir));
+  console.log();
 
   // Ensure output directory exists
   if (!fs.existsSync(outputDir)) {
@@ -50,13 +42,14 @@ async function runBuild(root: string | undefined, out: string | undefined) {
   }
 
   // 2. Scan Directory
-  Log.step('Scanning project structure...');
+  const scanSpinner = ora('Scanning project structure...').start();
   const structure = scanDirectory(projectPath);
 
   if (!structure || Object.keys(structure).length === 0) {
+    scanSpinner.fail(chalk.red('No files found'));
     throw new Error('No files found or all files were ignored.');
   }
-  Log.success('Structure scanned');
+  scanSpinner.succeed(chalk.green('Project structure scanned'));
 
   // 3. Content Management
   const contentPath = path.join(outputDir, CONFIG.FILES.CONTENT);
@@ -66,19 +59,18 @@ async function runBuild(root: string | undefined, out: string | undefined) {
   const hasExistingContent = Object.keys(content).length > 0;
 
   if (hasExistingContent) {
-    Log.info('Loading existing content and checking for deleted files...');
+    console.log(chalk.dim('  ℹ️  Loading existing content...'));
     content = await detectDeletedFiles(content, currentFiles);
   } else {
-    Log.info('Creating new content file...');
+    console.log(chalk.dim('  ℹ️  Creating new content file...'));
   }
 
   // 4. Merge, Sort & Inject
-  Log.step('Processing slides...');
-  // We combine structure + content, then inject custom slides and sort results
+  const processSpinner = ora('Processing slides...').start();
   let mergedStructure = mergeStructureWithContent(structure, content);
   mergedStructure = injectAndSort(mergedStructure, content);
 
-  // 5. Update JSON Data (Preserve user edits, add new files)
+  // 5. Update JSON Data
   const newContentFromStructure = extractContentFromStructure(mergedStructure);
   const finalContent: PresentationContent = { ...content };
   let newFilesCount = 0;
@@ -90,13 +82,15 @@ async function runBuild(root: string | undefined, out: string | undefined) {
     }
   }
 
-  if (newFilesCount > 0) Log.success(`${newFilesCount} new file(s) added to content.`);
+  if (newFilesCount > 0) {
+    processSpinner.text = `Processing slides... (${newFilesCount} new files)`;
+  }
 
   await fsp.writeFile(contentPath, JSON.stringify(finalContent, null, 2));
-  Log.file(contentPath, 'Content Data');
+  processSpinner.succeed(chalk.green('Slides processed'));
 
   // 6. Generate HTML
-  Log.step('Generating HTML...');
+  const htmlSpinner = ora('Generating HTML...').start();
 
   const templateDir = await findTemplateDir(__dirname);
   const meta = content[CONFIG.META_KEY] || {};
@@ -106,28 +100,52 @@ async function runBuild(root: string | undefined, out: string | undefined) {
 
   const htmlPath = path.join(outputDir, CONFIG.FILES.HTML);
   await fsp.writeFile(htmlPath, finalHtml);
-  Log.file(htmlPath, 'Presentation');
+  htmlSpinner.succeed(chalk.green('HTML generated'));
 
   // 7. Final Output
-  console.log('\n📌 Next Steps:');
-  console.log(`   1. Open ${htmlPath} in your browser`);
-  console.log(`   2. Edit ${contentPath} to add notes/slides`);
-  console.log(`   3. Run 'codeslides' again to update`);
+  console.log();
+  console.log(chalk.bold.green('✨ Build complete!'));
+  console.log();
+  console.log(chalk.dim('📄 Files created:'));
+  console.log(chalk.dim('  •'), chalk.cyan(path.relative(process.cwd(), htmlPath)));
+  console.log(chalk.dim('  •'), chalk.cyan(path.relative(process.cwd(), contentPath)));
+  console.log();
+  console.log(chalk.bold('📌 Next steps:'));
+  console.log(chalk.dim('  1.'), `Open ${chalk.cyan(path.basename(htmlPath))} in your browser`);
+  console.log(
+    chalk.dim('  2.'),
+    `Edit ${chalk.cyan(path.basename(contentPath))} to customize slides`
+  );
+  console.log(chalk.dim('  3.'), `Run ${chalk.cyan('codeslides')} again to update`);
+  console.log();
 }
 
 // --- CLI Definition ---
 const cli = cac('codeslides');
 const VERSION = '2.0.0';
 
+// Header
+console.log();
+console.log(chalk.bold.cyan('  ╔═══════════════════════════════════╗'));
+console.log(
+  chalk.bold.cyan('  ║') + chalk.bold('   🎬 CodeSlides Generator v2.0  ') + chalk.bold.cyan('║')
+);
+console.log(chalk.bold.cyan('  ╚═══════════════════════════════════╝'));
+console.log();
+
 cli
-  .command('[root] [out]', 'Generate documentation from project root')
+  .command('[root] [out]', 'Generate presentation from project')
+  .example('codeslides .')
+  .example('codeslides ./src')
+  .example('codeslides ./src ./output')
   .action(async (root, out) => {
     try {
-      Log.header(VERSION);
       await runBuild(root, out);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      Log.error(message);
+      console.log();
+      console.log(chalk.bold.red('❌ Error:'), chalk.red(message));
+      console.log();
       process.exit(1);
     }
   });

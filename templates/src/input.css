@@ -34,6 +34,10 @@
     @apply mr-2 text-[10px] opacity-70 rotate-90;
   }
 
+  .markdown-content code {
+    @apply bg-[#161b22] text-accent px-1.5 py-0.5 rounded text-[0.9em] font-mono border border-[#30363d];
+  }
+
   /* Icon Colors */
   .icon-js {
     @apply text-icon-js;
