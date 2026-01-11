@@ -16,6 +16,8 @@ export interface SlideContent {
   code?: string | string[];
   screenshots?: (string | { src: string; width?: string | number })[];
   layout?: 'linear' | 'split';
+  listStyle?: 'bullets' | 'numbered'; // numbered = boxes with numbers
+  show?: boolean; // Set to false to hide from presentation
   [key: string]: any;
 }
 

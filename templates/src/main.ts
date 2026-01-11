@@ -5,6 +5,7 @@ import json from 'highlight.js/lib/languages/json';
 import xml from 'highlight.js/lib/languages/xml';
 import css from 'highlight.js/lib/languages/css';
 import confetti from 'canvas-confetti';
+import { ProjectStructure, ProjectNode, SlideContent } from '../../src/types';
 
 hljs.registerLanguage('typescript', typescript);
 hljs.registerLanguage('json', json);
@@ -18,48 +19,27 @@ declare global {
   }
 }
 
-interface ProjectStructure {
-  [key: string]: FileSystemItem;
-}
-
-interface FileSystemItem {
-  type: 'file' | 'folder' | 'slide';
-  children?: ProjectStructure;
-  content?: SlideContent;
-  icon?: string;
-}
-
-interface SlideContent {
-  title?: string;
-  description?: string;
-  code?: string | string[];
-  bullets?: string[];
-  screenshots?: (string | { src: string; width?: string | number })[];
-  screenshot?: string; // Legacy support
-  layout?: 'linear' | 'split';
-}
-
 // State
 const sidebar = document.getElementById('sidebar') as HTMLElement;
 const toggleBtn = document.getElementById('toggleSidebar') as HTMLElement;
 const progressBar = document.getElementById('progressBar') as HTMLElement;
 const contentArea = document.getElementById('contentArea') as HTMLElement;
 
-let navigationList: { path: string; data: FileSystemItem; element: HTMLElement }[] = [];
+let navigationList: { path: string; data: ProjectNode; element: HTMLElement }[] = [];
 let currentIndex = -1;
 
 // URL Hash Management
 function updateURLHash(index: number) {
   const slide = navigationList[index];
   if (!slide) return;
-  
+
   const hash = `#slide-${index}`;
   history.replaceState({ slideIndex: index }, '', hash);
 }
 
 function parseURLHash(): number | null {
   const hash = window.location.hash.slice(1); // Remove #
-  
+
   // Support #slide-5 format
   if (hash.startsWith('slide-')) {
     const index = parseInt(hash.replace('slide-', ''), 10);
@@ -67,16 +47,13 @@ function parseURLHash(): number | null {
       return index;
     }
   }
-  
+
   // Support #path/to/file.ts format
-  const slideIndex = navigationList.findIndex(
-    item => item.path === hash
-  );
+  const slideIndex = navigationList.findIndex((item) => item.path === hash);
   if (slideIndex !== -1) return slideIndex;
-  
+
   return null;
 }
-
 
 // Initialize
 function init() {
@@ -164,7 +141,7 @@ function init() {
 function buildContentMap(
   structure: ProjectStructure,
   currentPath = '',
-  map: Record<string, FileSystemItem> = {}
+  map: Record<string, ProjectNode> = {}
 ) {
   Object.keys(structure).forEach((key) => {
     const item = structure[key];
@@ -352,18 +329,27 @@ function renderContent(path: string, content: SlideContent, type: string) {
         `;
   }
 
-  // Bullets
   if (content.bullets && content.bullets.length > 0) {
+    const isNumbered = content.listStyle === 'numbered';
+    const listItems = content.bullets
+      .map((bullet, index) => {
+        const parsedBullet = marked.parseInline(bullet);
+        if (isNumbered) {
+          return `<li class="py-3 pl-[60px] relative text-2xl text-[#d0d7de] markdown-content">
+            <span class="absolute left-0 top-2 w-10 h-10 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent font-bold text-lg">${index + 1}</span>
+            ${parsedBullet}
+          </li>`;
+        } else {
+          return `<li class="py-2 pl-[40px] relative text-2xl text-[#d0d7de] markdown-content before:content-['•'] before:absolute before:left-0 before:text-accent before:text-4xl before:leading-none before:top-1">${parsedBullet}</li>`;
+        }
+      })
+      .join('');
+
     textHtml += `
             <div class="content-section">
                 <div class="section-title">Wichtige Punkte</div>
                 <ul class="list-none">
-                    ${content.bullets
-                      .map((bullet) => {
-                        const parsedBullet = marked.parseInline(bullet);
-                        return `<li class="py-2 pl-[40px] relative text-2xl text-[#d0d7de] markdown-content before:content-['•'] before:absolute before:left-0 before:text-accent before:text-4xl before:leading-none before:top-1">${parsedBullet}</li>`;
-                      })
-                      .join('')}
+                    ${listItems}
                 </ul>
             </div>
         `;

@@ -35,11 +35,21 @@ export function mergeStructureWithContent(
   for (const [key, item] of Object.entries(structure)) {
     const fullPath = currentPath ? `${currentPath}/${key}` : key;
 
+    // Skip files with show: false
+    const existingContent = content[fullPath];
+    if (existingContent && existingContent.show === false) {
+      continue;
+    }
+
     if (item.type === 'folder' && item.children) {
-      result[key] = {
-        type: 'folder',
-        children: mergeStructureWithContent(item.children, content, fullPath),
-      };
+      const mergedChildren = mergeStructureWithContent(item.children, content, fullPath);
+      // Only add folder if it has visible children
+      if (Object.keys(mergedChildren).length > 0) {
+        result[key] = {
+          type: 'folder',
+          children: mergedChildren,
+        };
+      }
     } else if (item.type === 'file') {
       result[key] = {
         type: 'file',
@@ -133,6 +143,10 @@ export function injectAndSort(
 
   Object.keys(content).forEach((pathKey) => {
     if (pathKey === META_KEY) return;
+
+    // Skip hidden slides (show: false)
+    const slideContent = content[pathKey];
+    if (slideContent && slideContent.show === false) return;
 
     const parts = pathKey.split('/');
     let currentLevel = workingStructure;
