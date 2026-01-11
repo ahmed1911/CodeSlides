@@ -438,7 +438,11 @@ function renderContent(path: string, content: SlideContent, type: string) {
         const width = typeof item === 'object' && item.width ? item.width : '400px';
         const widthStyle = typeof width === 'number' ? `${width}px` : width;
         const animationDelay = `${i * 150}ms`;
-        imagesHtml += `<img src="${src}" alt="Screenshot" style="max-width: ${widthStyle}; width: 100%; animation-delay: ${animationDelay};" class="rounded-lg border border-border shadow-2xl screenshot-img" data-animate="tilt">`;
+        
+        const showBorder = section.border !== false;
+        const styleClass = showBorder ? 'border border-border shadow-2xl' : '';
+        
+        imagesHtml += `<img src="${src}" alt="Screenshot" style="max-width: ${widthStyle}; width: 100%; animation-delay: ${animationDelay};" class="rounded-lg ${styleClass} screenshot-img" data-animate="tilt">`;
       });
 
       const justifyClass = isRightSlot ? 'justify-end' : 'items-start';

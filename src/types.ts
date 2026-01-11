@@ -13,7 +13,7 @@ export type SlideSection =
   | { type: 'text'; title?: string; content: string; slot?: 'left' | 'right' }
   | { type: 'list'; title?: string; items: string[]; listStyle?: 'bullets' | 'numbered'; slot?: 'left' | 'right' }
   | { type: 'code'; title?: string; code: string | string[]; language?: string; slot?: 'left' | 'right' }
-  | { type: 'images'; title?: string; images: (string | { src: string; width?: string | number })[]; slot?: 'left' | 'right' };
+  | { type: 'images'; title?: string; images: (string | { src: string; width?: string | number })[]; slot?: 'left' | 'right'; border?: boolean };
 
 export interface SlideContent {
   title?: string;
