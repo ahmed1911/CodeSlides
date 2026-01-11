@@ -25,11 +25,14 @@ export async function generateHtml(
 
     const safeScriptJs = scriptJs.replace(/<\/?script/gi, '\\x3C\\/script');
 
+    const meta = (structure as any).__META__;
+    const finalTitle = meta?.projectTitle || projectTitle;
+
     return indexHtml
       .replaceAll(PLACEHOLDERS.CSS, () => styleCss)
       .replaceAll(PLACEHOLDERS.JS, () => safeScriptJs)
       .replaceAll(PLACEHOLDERS.STRUCTURE, () => JSON.stringify(structure, null, 2))
-      .replaceAll(PLACEHOLDERS.TITLE, () => projectTitle);
+      .replaceAll(PLACEHOLDERS.TITLE, () => finalTitle);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to generate HTML: ${message}`);

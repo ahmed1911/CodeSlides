@@ -19,6 +19,29 @@ declare global {
   }
 }
 
+// Helper to separate Hex to RGB for Tailwind opacity support
+function hexToRgb(hex: string): string | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`
+    : null;
+}
+
+function applyTheme(meta: any) {
+  const root = document.documentElement;
+  if (meta?.accentColor) {
+    root.style.setProperty('--accent-color', meta.accentColor);
+    const rgb = hexToRgb(meta.accentColor);
+    if (rgb) {
+      root.style.setProperty('--accent-rgb', rgb);
+    }
+  }
+  if (meta?.backgroundColor) {
+    root.style.setProperty('--bg-color', meta.backgroundColor);
+    root.style.setProperty('--sidebar-color', meta.backgroundColor);
+  }
+}
+
 // State
 const sidebar = document.getElementById('sidebar') as HTMLElement;
 const toggleBtn = document.getElementById('toggleSidebar') as HTMLElement;
@@ -58,6 +81,10 @@ function parseURLHash(): number | null {
 // Initialize
 function init() {
   const projectStructure = window.projectStructure;
+  
+  // Apply Theme
+  applyTheme(projectStructure.__META__);
+
   const fileContainer = document.getElementById('fileTree');
   if (!fileContainer || !projectStructure) return;
 
@@ -144,6 +171,7 @@ function buildContentMap(
   map: Record<string, ProjectNode> = {}
 ) {
   Object.keys(structure).forEach((key) => {
+    if (key === '__META__') return;
     const item = structure[key];
     const fullPath = currentPath ? `${currentPath}/${key}` : key;
 
@@ -164,6 +192,7 @@ function renderSidebar(structure: ProjectStructure, container: HTMLElement, path
   const sortedKeys = Object.keys(structure);
 
   for (const key of sortedKeys) {
+    if (key === '__META__') continue;
     const item = structure[key];
     const currentPath = pathStr ? `${pathStr}/${key}` : key;
     const safeId = currentPath.replace(/[^\w-]/g, '_');

@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prebuild": "yarn clean",
-    "build": "tsc && yarn build:frontend && yarn build:css",
+    "build": "tsc && yarn build:frontend && yarn build:css && chmod +x dist/cli.js",
     "build:frontend": "node build.js",
     "build:css": "tailwindcss -i ./templates/src/input.css -o ./templates/dist/output.css --minify",
     "start": "ts-node src/cli.ts",

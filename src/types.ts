@@ -24,6 +24,8 @@ export interface SlideContent {
 export interface PresentationContent {
   __META__?: {
     projectTitle?: string;
+    accentColor?: string;
+    backgroundColor?: string;
     [key: string]: any;
   };
   [filePath: string]: SlideContent | any;

@@ -70,6 +70,12 @@ async function runBuild(root: string | undefined, out: string | undefined) {
   let mergedStructure = mergeStructureWithContent(structure, content);
   mergedStructure = injectAndSort(mergedStructure, content);
 
+  // Attach META to the structure for the builder to use
+  if (content[CONFIG.META_KEY]) {
+    (mergedStructure as any)[CONFIG.META_KEY] = content[CONFIG.META_KEY];
+  }
+
+
   // 5. Update JSON Data
   const newContentFromStructure = extractContentFromStructure(mergedStructure);
   const finalContent: PresentationContent = { ...content };

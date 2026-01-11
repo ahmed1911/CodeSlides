@@ -9,11 +9,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#0f1115',
-        sidebar: '#0f1115',
+        bg: 'var(--bg-color, #0f1115)',
+        sidebar: 'var(--sidebar-color, #0f1115)',
         border: '#30363d',
         active: '#21262d',
-        accent: '#58a6ff',
+        accent: 'rgb(var(--accent-rgb, 88 166 255) / <alpha-value>)',
         'text-primary': '#c9d1d9',
         'text-secondary': '#8b949e',
         'icon-folder': '#58a6ff',
