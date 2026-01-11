@@ -344,112 +344,142 @@ function renderContent(path: string, content: SlideContent, type: string) {
   const titleContainer = document.getElementById('dynamicTitleContainer');
   if (titleContainer) titleContainer.innerHTML = titleHtml;
 
-  // 2. Content Sections
-  let textHtml = '';
+  // 2. Normalize Sections
+  let sections: any[] = content.sections || [];
 
-  // Description
-  if (content.description) {
-    const parsedDescription = marked.parse(content.description);
-    textHtml += `
-            <div class="content-section">
-                <div class="section-title">Überblick</div>
-                <div class="text-2xl leading-relaxed text-[#d0d7de] markdown-content">${parsedDescription}</div>
-            </div>
-        `;
+  if (sections.length === 0) {
   }
 
-  if (content.bullets && content.bullets.length > 0) {
-    const isNumbered = content.listStyle === 'numbered';
-    const listItems = content.bullets
-      .map((bullet, index) => {
-        const parsedBullet = marked.parseInline(bullet);
-        if (isNumbered) {
-          return `<li class="py-3 pl-[60px] relative text-2xl text-[#d0d7de] markdown-content">
-            <span class="absolute left-0 top-2 w-10 h-10 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent font-bold text-lg">${index + 1}</span>
-            ${parsedBullet}
-          </li>`;
-        } else {
-          return `<li class="py-2 pl-[40px] relative text-2xl text-[#d0d7de] markdown-content before:content-['•'] before:absolute before:left-0 before:text-accent before:text-4xl before:leading-none before:top-1">${parsedBullet}</li>`;
-        }
-      })
-      .join('');
+  // 3. Render Sections
+  let sectionsHtml = '';
+  // Helpers for Split Layout
+  let leftSectionsHtml = '';
+  let rightSectionsHtml = '';
 
-    textHtml += `
-            <div class="content-section">
-                <div class="section-title">Wichtige Punkte</div>
-                <ul class="list-none">
-                    ${listItems}
-                </ul>
-            </div>
-        `;
-  }
+  // We need to collect code blocks to initialize typewriters later
+  const codeBlocksToInit: { id: string; code: string }[] = [];
 
-  // Code
-  if (content.code) {
-    textHtml += `
-            <div class="content-section">
-                <div class="section-title">Code Snippet</div>
-                <div class="rounded-xl overflow-hidden border border-[#30363d] bg-[#0d1117] shadow-2xl relative group">
-                    <div class="h-9 bg-[#161b22] border-b border-[#30363d] flex items-center px-4 justify-between">
-                        <div class="flex gap-2">
-                            <div class="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff4e44] transition-colors"></div>
-                            <div class="w-3 h-3 rounded-full bg-[#ffbd2e] hover:bg-[#ffb02e] transition-colors"></div>
-                            <div class="w-3 h-3 rounded-full bg-[#27c93f] hover:bg-[#22b738] transition-colors"></div>
-                        </div>
-                        <div class="text-xs text-text-secondary font-mono opacity-50 select-none">typescript</div>
-                    </div>
-                    <div class="overflow-x-auto p-4 custom-scrollbar max-h-[600px]">
-                        <pre><code class="language-typescript font-mono text-[14px] leading-relaxed text-[#e6edf3]" id="activeCodeBlock"></code></pre>
-                    </div>
-                </div>
-            </div>
-        `;
-  }
+  sections.forEach((section, index) => {
+    // Determine Alignment based on Slot
+    const isRightSlot = section.slot === 'right';
+    const alignClass = isRightSlot ? 'text-right items-end' : '';
+    const titleReverseClass = isRightSlot ? 'flex-row-reverse' : '';
+    const titleMarginClass = isRightSlot ? 'ml-auto' : ''; // Ensure title block moves right if container is items-end
 
-  // Screenshots
-  const screenshots = content.screenshots || (content.screenshot ? [content.screenshot!] : []);
-  let imagesHtml = '';
-  if (screenshots.length > 0) {
-    screenshots.forEach((item: any, index: number) => {
-      const src = typeof item === 'string' ? item : item.src;
-      const width = typeof item === 'object' && item.width ? item.width : '400px';
-      const widthStyle = typeof width === 'number' ? `${width}px` : width;
-      const animationDelay = `${index * 150}ms`;
-      imagesHtml += `<img src="${src}" alt="Screenshot" style="max-width: ${widthStyle}; width: 100%; animation-delay: ${animationDelay};" class="rounded-lg border border-border shadow-2xl screenshot-img" data-animate="tilt">`;
-    });
-  }
-
-  // Layout
-  let finalHtml = '';
-  const useSplitLayout = screenshots.length > 0 && content.layout !== 'linear';
-
-  if (useSplitLayout) {
-    finalHtml = `
-            <div class="flex flex-row gap-12 items-start">
-                <div class="flex-1 min-w-0">
-                    ${textHtml}
-                </div>
-                <div class="flex-shrink-0 flex flex-col gap-6">
-                    ${imagesHtml}
-                </div>
-            </div>
-        `;
-  } else {
-    finalHtml = textHtml;
-    if (imagesHtml) {
-      finalHtml += `
-                <div class="content-section mt-6">
-                    ${content.screenshots && content.screenshots.length > 0 ? '<div class="section-title">Screenshots</div>' : ''}
-                    <div class="flex flex-wrap gap-4 items-start">
-                        ${imagesHtml}
-                    </div>
-                </div>
-            `;
+    // Optional Section Title
+    let sectionTitleHtml = '';
+    if (section.title) {
+      sectionTitleHtml = `<div class="section-title ${titleReverseClass}">${section.title}</div>`; 
     }
+
+    let currentSectionHtml = '';
+
+    if (section.type === 'text') {
+      const parsedContent = marked.parse(section.content);
+      currentSectionHtml = `
+        <div class="content-section flex flex-col ${alignClass}">
+            ${sectionTitleHtml}
+            <div class="text-2xl leading-relaxed text-[#d0d7de] markdown-content">${parsedContent}</div>
+        </div>
+      `;
+    } else if (section.type === 'list') {
+      const isNumbered = section.listStyle === 'numbered';
+      const listItems = section.items
+        .map((item: string, i: number) => {
+          const parsedItem = marked.parseInline(item);
+          if (isNumbered) {
+            return `<li class="py-3 pl-[60px] relative text-2xl text-[#d0d7de] markdown-content">
+              <span class="absolute left-0 top-2 w-10 h-10 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent font-bold text-lg">${i + 1}</span>
+              ${parsedItem}
+            </li>`;
+          } else {
+            return `<li class="py-2 pl-[40px] relative text-2xl text-[#d0d7de] markdown-content before:content-['•'] before:absolute before:left-0 before:text-accent before:text-4xl before:leading-none before:top-1">${parsedItem}</li>`;
+          }
+        })
+        .join('');
+
+      currentSectionHtml = `
+        <div class="content-section flex flex-col ${alignClass}">
+            ${sectionTitleHtml}
+            <ul class="list-none text-left"> <!-- Force lists to stay left-aligned text for readability, or remove text-left to align right? -->
+                 <!-- Actually, list bullets are absolute left. If we align text right, bullets overlap text. -->
+                 <!-- Keeping lists text-left is safer for now. -->
+                ${listItems}
+            </ul>
+        </div>
+      `;
+    } else if (section.type === 'code') {
+      const codeId = `code-${index}`;
+      const codeText = Array.isArray(section.code) ? section.code.join('\n') : section.code;
+      codeBlocksToInit.push({ id: codeId, code: codeText });
+
+      currentSectionHtml = `
+        <div class="content-section flex flex-col ${alignClass}">
+            ${sectionTitleHtml}
+            <div class="rounded-xl overflow-hidden border border-[#30363d] bg-[#0d1117] shadow-2xl relative group w-full text-left"> <!-- Code always LTR -->
+                <div class="h-9 bg-[#161b22] border-b border-[#30363d] flex items-center px-4 justify-between">
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff4e44] transition-colors"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#ffbd2e] hover:bg-[#ffb02e] transition-colors"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#27c93f] hover:bg-[#22b738] transition-colors"></div>
+                    </div>
+                    <div class="text-xs text-text-secondary font-mono opacity-50 select-none">${section.language || 'typescript'}</div>
+                </div>
+                <div class="overflow-x-auto p-4 custom-scrollbar max-h-[600px]">
+                    <pre><code class="language-${section.language || 'typescript'} font-mono text-[14px] leading-relaxed text-[#e6edf3]" id="${codeId}"></code></pre>
+                </div>
+            </div>
+        </div>
+      `;
+    } else if (section.type === 'images') {
+      let imagesHtml = '';
+      section.images.forEach((item: any, i: number) => {
+        const src = typeof item === 'string' ? item : item.src;
+        const width = typeof item === 'object' && item.width ? item.width : '400px';
+        const widthStyle = typeof width === 'number' ? `${width}px` : width;
+        const animationDelay = `${i * 150}ms`;
+        imagesHtml += `<img src="${src}" alt="Screenshot" style="max-width: ${widthStyle}; width: 100%; animation-delay: ${animationDelay};" class="rounded-lg border border-border shadow-2xl screenshot-img" data-animate="tilt">`;
+      });
+
+      const justifyClass = isRightSlot ? 'justify-end' : 'items-start';
+
+      currentSectionHtml = `
+        <div class="content-section flex flex-col ${alignClass}">
+            ${sectionTitleHtml}
+            <div class="flex flex-wrap gap-4 ${justifyClass} w-full">
+                ${imagesHtml}
+            </div>
+        </div>
+      `;
+    }
+
+    // Accumulate Logic
+    if (content.layout === 'split') {
+        if (section.slot === 'right') {
+            rightSectionsHtml += currentSectionHtml;
+        } else {
+            leftSectionsHtml += currentSectionHtml;
+        }
+    } else {
+        sectionsHtml += currentSectionHtml;
+    }
+  });
+
+  // Handle Layout Construction
+  if (content.layout === 'split') {
+    sectionsHtml = `
+      <div class="flex gap-12 items-start h-full">
+        <div class="flex flex-col gap-0 min-h-0 flex-1 min-w-0">
+            ${leftSectionsHtml}
+        </div>
+        <div class="flex flex-col gap-0 min-h-0 items-end shrink-0">
+            ${rightSectionsHtml}
+        </div>
+      </div>
+    `;
   }
-
-  contentArea.innerHTML = finalHtml;
-
+  
+  contentArea.innerHTML = sectionsHtml;
   // Trigger animations after DOM insertion
   requestAnimationFrame(() => {
     const animatedImages = contentArea.querySelectorAll('[data-animate="tilt"]');
@@ -458,14 +488,13 @@ function renderContent(path: string, content: SlideContent, type: string) {
     });
   });
 
-  if (content.code) {
-    const codeEl = document.getElementById('activeCodeBlock');
-    const codeText = Array.isArray(content.code) ? content.code.join('\n') : content.code;
-
-    if (codeEl && codeText) {
-      typeWriter(codeEl, codeText);
+  // Init Typewriters
+  codeBlocksToInit.forEach(({ id, code }) => {
+    const codeEl = document.getElementById(id);
+    if (codeEl && code) {
+      typeWriter(codeEl, code);
     }
-  }
+  });
 }
 
 function typeWriter(element: HTMLElement, text: string) {
@@ -503,7 +532,6 @@ function typeWriter(element: HTMLElement, text: string) {
 
     tempDiv.childNodes.forEach((child) => traverse(child, element));
 
-    const speed = 2;
     const chunk = 5;
 
     let i = 0;

@@ -9,15 +9,20 @@ export interface ProjectStructure {
   [key: string]: ProjectNode;
 }
 
+export type SlideSection =
+  | { type: 'text'; title?: string; content: string; slot?: 'left' | 'right' }
+  | { type: 'list'; title?: string; items: string[]; listStyle?: 'bullets' | 'numbered'; slot?: 'left' | 'right' }
+  | { type: 'code'; title?: string; code: string | string[]; language?: string; slot?: 'left' | 'right' }
+  | { type: 'images'; title?: string; images: (string | { src: string; width?: string | number })[]; slot?: 'left' | 'right' };
+
 export interface SlideContent {
   title?: string;
-  description?: string;
-  bullets?: string[];
-  code?: string | string[];
-  screenshots?: (string | { src: string; width?: string | number })[];
+  
+  // New generic sections
+  sections?: SlideSection[];
   layout?: 'linear' | 'split';
-  listStyle?: 'bullets' | 'numbered'; // numbered = boxes with numbers
-  show?: boolean; // Set to false to hide from presentation
+  listStyle?: 'bullets' | 'numbered';
+  show?: boolean;
   [key: string]: any;
 }
 

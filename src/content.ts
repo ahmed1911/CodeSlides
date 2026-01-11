@@ -7,8 +7,19 @@ const META_KEY = '__META__';
 
 const getDefaultContent = (filename: string): SlideContent => ({
   title: filename,
-  description: `File: ${filename}`,
-  bullets: ['Add description...', 'More details...'],
+  sections: [
+    {
+      type: 'text',
+      title: 'Introduction',
+      content: `File: **${filename}**\n\nAdd description here...`
+    },
+    {
+      type: 'list',
+      title: 'Key Points',
+      items: ['Point 1', 'Point 2', 'Point 3'],
+      listStyle: 'bullets'
+    }
+  ]
 });
 
 // --- Core Logic ---
