@@ -5,26 +5,40 @@ CodeSlides parses your project structure and generates a beautiful, navigable "s
 
 ## Features
 
-- 📂 **Auto-Scan**: Automatically maps your file structure.
-- 🎨 **Component-Based**: Customize the look via `templates/` (Tailwind CSS, clean JS).
-- 📝 **Content Management**: Annotate files with descriptions and bullet points in a simple JSON file.
-- 🖥️ **Interactive UI**: Navigate through your code like a slide deck.
+- 📂 **Auto-Scan**: Automatically maps your file structure
+- 🎨 **Beautiful UI**: Dark theme with smooth animations
+- 📝 **Content Management**: Annotate files with descriptions and bullet points
+- ⌨️ **Keyboard Navigation**: Arrow keys and Space for easy navigation
+- 🎯 **Syntax Highlighting**: Code blocks with highlight.js
+- ✨ **Animations**: Tilt effects for screenshots, typewriter for code
 
 ## Installation
 
+### Global Installation (Recommended)
+
 ```bash
 # Clone the repository
-git clone https://github.com/ahmed1911/codeslides.git
+git clone https://github.com/ahmed1911/CodeSlides.git
+cd CodeSlides
 
 # Install dependencies
-cd codeslides
-npm install
+yarn install
 
 # Build the project
-npm run build
+yarn build
 
-# Link globally (optional, for easy access)
+# Link globally for easy access
 npm link
+```
+
+### Local Usage
+
+```bash
+# Install dependencies and build
+yarn install && yarn build
+
+# Run directly
+./dist/cli.js <source-directory>
 ```
 
 ## Usage
@@ -32,22 +46,56 @@ npm link
 Navigate to any project you want to present:
 
 ```bash
-# Generate presentation in the current directory
+# Generate presentation for current directory
 codeslides .
 
-# Or specify source and output directories
-codeslides ./src ./presentation
+# Generate for specific directory
+codeslides ./src
+
+# Specify custom output directory
+codeslides ./src ./my-presentation
 ```
 
 After running, open the generated `code-presentation.html` in your browser.
 
 ## Customization
 
-You can fully customize the generated presentation by editing the files in `templates/`:
+Edit the generated `presentation-content.json` to add:
 
-- `index.html`: The main skeletal structure.
-- `style.css`: Tailwind CSS styles.
-- `script.js`: Client-side logic for navigation and rendering.
+- Custom descriptions
+- Bullet points
+- Code snippets
+- Screenshots
+- Custom slides
+
+Example:
+
+```json
+{
+  "src/main.ts": {
+    "title": "Main Entry Point",
+    "description": "Application bootstrap and initialization",
+    "bullets": ["Sets up the CLI interface", "Handles command-line arguments"],
+    "screenshots": ["https://example.com/screenshot.png"]
+  }
+}
+```
+
+## Development
+
+```bash
+# Run in development mode
+yarn dev <directory>
+
+# Lint code
+yarn lint
+
+# Format code
+yarn format
+
+# Build for production
+yarn build
+```
 
 ## License
 

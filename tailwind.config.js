@@ -1,19 +1,19 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./templates/**/*.html",
-    "./templates/**/*.js",
-    "./templates/**/*.ts", 
-    "./templates/dist/*.js" 
+    './templates/**/*.html',
+    './templates/**/*.js',
+    './templates/**/*.ts',
+    './templates/dist/*.js',
   ],
   theme: {
     extend: {
       colors: {
-        'bg': '#0f1115',
-        'sidebar': '#0f1115',
-        'border': '#30363d',
-        'active': '#21262d',
-        'accent': '#58a6ff',
+        bg: '#0f1115',
+        sidebar: '#0f1115',
+        border: '#30363d',
+        active: '#21262d',
+        accent: '#58a6ff',
         'text-primary': '#c9d1d9',
         'text-secondary': '#8b949e',
         'icon-folder': '#58a6ff',
@@ -25,8 +25,8 @@ module.exports = {
         'icon-css': '#563d7c',
         'icon-md': '#083fa1',
         'icon-image': '#b07219',
-      }
+      },
     },
   },
   plugins: [],
-}
+};

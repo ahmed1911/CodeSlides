@@ -9,12 +9,16 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
-    "build": "tsc && npm run build:frontend && npm run build:css",
+    "prebuild": "yarn clean",
+    "build": "tsc && yarn build:frontend && yarn build:css",
     "build:frontend": "node build.js",
     "build:css": "tailwindcss -i ./templates/src/input.css -o ./templates/dist/output.css --minify",
     "start": "ts-node src/cli.ts",
     "dev": "ts-node src/cli.ts",
+    "lint": "eslint src/**/*.ts templates/src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts templates/src/**/*.ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"templates/src/**/*.ts\" \"*.js\" \"*.json\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"templates/src/**/*.ts\" \"*.js\" \"*.json\" \"*.md\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -27,13 +31,19 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/marked": "^6.0.0",
     "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
     "cac": "^6.7.14",
     "chokidar": "^5.0.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "fast-glob": "^3.3.3",
+    "prettier": "^3.7.4",
     "rollup": "^4.55.1",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
@@ -41,7 +51,6 @@
     "typescript": "^5.7.0"
   },
   "dependencies": {
-    "animejs": "3.2.1",
     "canvas-confetti": "^1.9.4",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1"
