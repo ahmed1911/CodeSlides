@@ -103,7 +103,7 @@ function init() {
 
     const data = contentMap[path];
 
-    if ((type === 'file' || type === 'slide') && data) {
+    if ((type === 'file' || type === 'slide' || type === 'folder') && data) {
       navigationList.push({
         path,
         data,
@@ -175,7 +175,7 @@ function buildContentMap(
     const item = structure[key];
     const fullPath = currentPath ? `${currentPath}/${key}` : key;
 
-    if (item.type === 'file' || item.type === 'slide') {
+    if (item.type === 'file' || item.type === 'slide' || item.type === 'folder') {
       map[fullPath] = item;
     }
 
@@ -203,6 +203,13 @@ function renderSidebar(structure: ProjectStructure, container: HTMLElement, path
 
       const folderItem = clone.querySelector('.tree-item') as HTMLElement;
       folderItem.id = `folder-${safeId}`;
+      
+      if (item.content) {
+          folderItem.setAttribute('data-path', currentPath);
+          folderItem.setAttribute('data-type', 'folder');
+          folderItem.classList.add('cursor-pointer', 'hover:text-text-primary'); // distinct style
+      }
+      
       folderItem.querySelector('.label')!.textContent = key;
 
       const childrenContainer = clone.querySelector('.tree-children') as HTMLElement;

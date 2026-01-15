@@ -59,6 +59,7 @@ export function mergeStructureWithContent(
         result[key] = {
           type: 'folder',
           children: mergedChildren,
+          ...(existingContent ? { content: existingContent } : {})
         };
       }
     } else if (item.type === 'file') {
@@ -171,6 +172,10 @@ export function injectAndSort(
         } else {
           currentLevel[part] = { type: 'folder', children: {} };
         }
+      }
+
+      if (isLast && currentLevel[part]) {
+        currentLevel[part].content = content[pathKey];
       }
 
       if (!isLast) {
